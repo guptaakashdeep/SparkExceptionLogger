@@ -56,7 +56,7 @@ if __name__ == "__main__":
 spark-submit --master yarn --deploy-mode cluster --conf spark.yarn.maxAttempts=1 --driver-memory=4g --conf spark.driver.cores=1 --executor-cores 5 --conf spark.executor.instances=4 --conf spark.dynamicAllocation.minExecutors=2 --conf spark.dynamicAllocation.maxExecutors=10 --executor-memory 14g --py-files <path-to-folder>/SparkExceptionLogger.py <path-to-pyfiles>/quaterly_sales.py
 ```
 
-#### Integration by passing `process_name` and `sub_process` as a job parameter.
+#### Integration by passing `process_name` and `sub_process` as  job parameters.
 To overwrite or define a custom process name by concatenating other parameters requires `args_tracking` to be set to `True`
 
 ```python
@@ -100,3 +100,4 @@ spark-submit --master yarn --deploy-mode cluster --conf spark.yarn.maxAttempts=1
 ### Additional Notes for expanding SparkExceptionLogger
 - For defining custom `process_name` or `sub_process` name by concatenating some other fields can be achieved by modifying the `_update_process` method in `SparkExceptionLogger.py`
 - `args_tracking` must be set to `True` for reading `process_name` and `sub_process` or any other argument from the method parameters.
+- `@SparkExceptionLogger` only needs to be defined on the main function that is being called on script execution and **NOT** on the helper methods.
