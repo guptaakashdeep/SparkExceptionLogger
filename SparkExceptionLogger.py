@@ -140,3 +140,5 @@ class SparkExceptionLogger:
                 arg_val_keys = arg_val_dict.keys()
                 if "process_name" in arg_val_keys:
                     self.record_dict["process_name"] = arg_val_dict["process_name"]
+                if "sub_process" in arg_val_keys:
+                    self.record_dict["sub_process"] = arg_val_dict["sub_process"]
