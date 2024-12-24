@@ -25,7 +25,7 @@ Logger logs the below mentioned details:
 - `time_taken` - Total time taken by the script execution.
 - `execution_dt` - Execution date of the spark job.
 
-## Inital Setup
+## Initial Setup
 
 SparkExceptionLogger supports writing logs into:
 
@@ -50,7 +50,7 @@ from pyspark.sql import SparkSession
 from SparkExceptionLogger import SparkExceptionLogger
 
 process_name = "sales"
-app_name = "quaterly_region_sales"
+app_name = "quaterly"
 
 spark = SparkSession.builder.master("yarn").enableHiveSupport().getOrCreate()
 
@@ -85,7 +85,7 @@ from SparkExceptionLogger import SparkExceptionLogger
 process_name = "dummy_process"
 
 # sub process name if passed via as arguments will be overwritten
-app_name = "quaterly_region_sales"
+app_name = "quaterly"
 
 spark = SparkSession.builder.master("yarn").enableHiveSupport().getOrCreate()
 
@@ -133,3 +133,16 @@ spark-submit --master yarn --deploy-mode cluster --conf spark.yarn.maxAttempts=1
     - `local` => populate `cluster_id` column with Driver `hostname`.
       - Currently, any other value, just fetches the `hostname` for the driver.
     - Main idea to add `service_name` parameter is to extend the logger functionality to get the `cluster_id` for other services in future.
+
+## Logs Written on Table
+
+|process_name|sub_process|script_name         |cluster_id        |application_id                |status   |start_ts               |end_ts                 |error            |error_desc                                                                                                                                                                                                                                                                                                                                                                                                           |time_taken|execution_dt|
+|------------|-----------|--------------------|--------------|------------------------------|---------|-----------------------|-----------------------|-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------|------------|
+|sales       |quaterly   |quaterly_sales.py|j-LM8CHLQYLJ2Q|application_1715654774853_0436|failed   |2024-05-14 06:08:32.947|2024-05-14 06:08:40.669|AnalysisException|Table or view not found: blogs_db.daily_sales; 'UnresolvedRelation [blogs_db, daily_sales], [], false                                                                                                                                                                                                                                                                                                                |7 secs    |2024-05-14  |
+|sales       |quaterly   |quaterly_sales.py|j-LM8CHLQYLJ2Q|application_1715654774853_0441|failed   |2024-05-14 06:14:38.922|2024-05-14 06:14:41.992|AnalysisException|User: arn:aws:sts::aws-acct:assumed-role/role-emr-ec2-service/i-0dd9f8257a143b9c3 is not authorized to perform: glue:GetDatabase on resource: arn:aws:glue:region:aws-acct:database/test_db because no identity-based policy allows the glue:GetDatabase action (Service: AWSGlue; Status Code: 400; Error Code: AccessDeniedException; Request ID: b0a1d47a-1fe8-42dc-8f9a-6b1b60d10423; Proxy: null)               |3 secs    |2024-05-14  |
+|sales       |q_region_sales   |quaterly_sales.py|j-LM8CHLQYLJ2Q|application_1715654774853_0396|completed|2024-05-14 05:58:37.491|2024-05-14 05:58:42.495|                 |                                                                                                                                                                                                                                                                                                                                                                                                                     |5 secs    |2024-05-14  |
+|wsl         |rwa_engine |job.py           |j-NYHXOTMH2O74|application_1730770422001_0882|failed   |2024-11-05 10:29:48.809|2024-11-05 10:30:55.753|AnalysisException|org.apache.hadoop.hive.ql.metadata.HiveException: Unable to alter table. Update table failed due to concurrent modifications. (Service: AWSGlue; Status Code: 400; Error Code: ConcurrentModificationException; Request ID: af79ffb4-baaf-47be-aba0-6e340bc549df; Proxy: null)                                                                                                                                       |1 min6 secs|2024-11-05  |
+|wsl         |postcalc|exposures.py|j-NYHXOTMH2O74|application_1730770422001_1262|failed   |2024-11-05 11:14:12.126|2024-11-05 11:15:08.824|AnalysisException|Found duplicate column(s) in the right attributes: `defaulted_asset_flag`                                                                                                                                                                                                                                                                                                                                            |56 secs   |2024-11-05  |
+|wsl         |set_id|dim_run_rk.py       |j-NYHXOTMH2O74|application_1730770422001_0293|failed   |2024-11-05 06:32:23.581|2024-11-05 06:33:01.585|AttributeError   |'NoneType' object has no attribute 'strip'                                                                                                                                                                                                                                                                                                                                                                           |38 secs   |2024-11-05  |
+|wsl         |rwa_engine|job.py           |j-NYHXOTMH2O74|application_1730770422001_1190|failed   |2024-11-05 11:00:05.463|2024-11-05 11:01:09.779|AnalysisException|org.apache.hadoop.hive.ql.metadata.HiveException: Unable to alter table. Update table failed due to concurrent modifications. (Service: AWSGlue; Status Code: 400; Error Code: ConcurrentModificationException; Request ID: 84891aad-1a60-4312-a4f7-27fa87918bb5; Proxy: null)                                                                                                                                       |1 min4 secs|2024-11-05  |
+|audit       |count_amount|count_amount_check.py|j-NYHXOTMH2O74|application_1730770422001_0750|failed   |2024-11-05 09:51:25.433|2024-11-05 09:52:09.112|TypeError        |Column is not iterable                                                                                                                                                                                                                                                                                                                                                                                               |43 secs   |2024-11-05  |
