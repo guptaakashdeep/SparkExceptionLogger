@@ -2,7 +2,7 @@ CREATE EXTERNAL TABLE `control_db.batch_logs`(
   `process_name` string, 
   `sub_process` string, 
   `script_name` string, 
-  `emr_id` string, 
+  `cluster_id` string, 
   `application_id` string, 
   `status` string, 
   `start_ts` timestamp, 

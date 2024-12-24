@@ -6,6 +6,7 @@ import argparse
 
 # Logger Table where the logs will be written
 LOG_TABLE = "control_db.batch_logs"
+LOG_PATH = "s3://spark-logs-bucket/logs/"
 
 
 class SparkExceptionLogger:
@@ -13,7 +14,7 @@ class SparkExceptionLogger:
     This decorator class is used to log the exception in spark application.
     It also log the arguments passed to the function,
     the time taken to execute the function,
-    the EMR ID,
+    the Cluster ID,
     the application ID,
     the process name,
     the script name,
@@ -27,7 +28,15 @@ class SparkExceptionLogger:
     """
 
     def __init__(
-        self, spark, process_name, script_name, sub_process="", arg_tracking=False
+        self,
+        spark,
+        process_name,
+        script_name,
+        sub_process="",
+        arg_tracking=False,
+        service_name="EMR",
+        log_to_path=False,
+        log_path="",
     ):
         self.spark = spark
         self.process_name = process_name
@@ -36,12 +45,19 @@ class SparkExceptionLogger:
         self.app_id = spark.sparkContext.applicationId
         self.arg_track = arg_tracking
         self.log_table = LOG_TABLE
+        self.service_name = service_name
+        self.path_logging = log_to_path
+        self.log_path = log_path if log_path else LOG_PATH
         self.record_dict = {
             "execution_dt": datetime.date(datetime.now()),
             "process_name": self.process_name,
             "sub_process": self.sprocess,
             "script_name": self.script,
-            "emr_id": self._get_emrid(),
+            "cluster_id": (
+                self._get_emrid()
+                if service_name.upper() == "EMR"
+                else self._get_hostname()
+            ),
             "application_id": self.app_id,
             "start_ts": datetime.now(),
         }
@@ -113,11 +129,16 @@ class SparkExceptionLogger:
     def _write_log(self):
         """Writes the log record into the log table"""
         records = [self._create_log_record()]
-        col_order = self.spark.read.table(self.log_table).limit(1).columns
-        self.spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
-        self.spark.createDataFrame(records).select(*col_order).write.insertInto(
-            self.log_table
-        )
+        if not self.path_logging:
+            col_order = self.spark.read.table(self.log_table).limit(1).columns
+            self.spark.conf.set("hive.exec.dynamic.partition.mode", "nonstrict")
+            self.spark.createDataFrame(records).select(*col_order).write.insertInto(
+                self.log_table
+            )
+        else:
+            self.spark.createDataFrame(records).write.mode("append").partitionBy(
+                "execution_dt"
+            ).parquet(self.log_path)
 
     def _track_args(self, func_obj, func_args):
         """Tracks the arguments passed to the function."""
@@ -131,8 +152,8 @@ class SparkExceptionLogger:
 
     def _update_process(self, param_dict):
         """Updates the process name with the arguments passed to the function.
-         This function can be modify to overwrite the process_name or the other parameters
-         being written into table from the arguments passed in the function.
+        This function can be modify to overwrite the process_name or the other parameters
+        being written into table from the arguments passed in the function.
         """
         for arg, val in param_dict.items():
             if isinstance(val, argparse.Namespace):
@@ -142,3 +163,7 @@ class SparkExceptionLogger:
                     self.record_dict["process_name"] = arg_val_dict["process_name"]
                 if "sub_process" in arg_val_keys:
                     self.record_dict["sub_process"] = arg_val_dict["sub_process"]
+
+    def _get_hostname(self):
+        """Gets the hostname on which Spark job is running."""
+        return str(popen("hostname").read().strip())
