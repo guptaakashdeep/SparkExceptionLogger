@@ -37,6 +37,8 @@ def main():
         ["id", "value"],
     )
 
+    # Writing into a non-existent table for failing it explicitly.
+    # To generate a failure log.
     df.coalesce(1).write.insertInto("db.non_existing_table")
 
 
