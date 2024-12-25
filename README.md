@@ -2,6 +2,10 @@
 
 A Lightweight Custom Spark Exception Logger decorator class written in python to log the Exceptions details occurred during a job run.
 
+A detailed technical blog on this: [Building a Lightweight SparkExceptionLogger](https://www.guptaakashdeep.com/spark-exception-logger/)
+
+To run it locally check the instruction on [Playground README.md](playground/README.md)
+
 ## Motivation
 
 The main motivation to create this Custom Spark Logger is: 
